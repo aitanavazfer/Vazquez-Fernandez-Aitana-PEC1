@@ -2,29 +2,233 @@
 title: "PEC1"
 author: "Aitana Vázquez Fernández"
 date: "2025-03-20"
-output: html_document
+output:
+  word_document:
+    toc: true
+    toc_depth: 4
+    df_print: paged
+  html_document:
+    toc: true
+    toc_depth: '4'
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Informe PEC1 - Análisis de datos ómicos
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+### Abstract
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+### Objetivos
 
-```{r cars}
-summary(cars)
+El objetivo general de este trabajo es realizar las tareas propuestas en la PEC1 y generar un informe con los resultados, utilizando para ello los conocimientos adquiridos a lo largo de este reto sobre tecnologías ómicas, el uso de de la herramienta de control de versiones Git y los repositorios en GitHub, el paquete de Bioconductor y sus clases, y por último herramientas estadísticas para la exploración de los datos.
+Como objetivos específicos se plantean los siguientes:
+-Crear un repositorio de GitHub para llevar a cabo el control de versiones del código de R y volcar los archivos resultados del trabajo.
+-Seleccionar un dataset con el que trabajar y presentarlo en formato clase SummarizedExperiment
+-Llevar a cabo un análisis exploratorio de los datos del dataset empleando para ello las distintas técnicas vistas. 
+
+### Métodos
+
+En primer lugar, se ha creado un repositorio en GitHub (1) que contendrá todos los elementos asociados a este trabajo.
+El código R para la exploración de los datos se encuentra debidamente comentado, y se realiza el control de versiones del mismo utilizando Git.
+
+El dataset de metabolómica seleccionado para llevar a cabo este trabajo proviene del repositorio Metabolomics Workbench (2).
+El dataset pertenece al al estudio "The role of gut microbiota in muscle mitochondria function, colon health, and sarcopenia: from clinical to bench (2)" (3). Brevemente este estudio pretende investigar cómo la microbiota se rleaciona con la sarcopenia, puesto que podrían encontrarse potencialmente asociadas. Para investigar el papel de la microbiota en la sarcopenia se lleva a cabo la comparación de la microbiota intestinal y la composición de metabolitos entre invividuos mayores con y sin sarcopenia.
+La razón por la que se ha elegido este dataset para el desarollo del trabajo se debe a la relevancia que ha cobrado el estudio de la microbiota y sus metabolitos en los últimos años, puesto que parece que podría relacionarse con multitud de enfermedades o procesos patológicos, algunos de ellos asociados al envejecimiento como por ejemplo, aunque no únicamente, la sarcopenia.
+
+Para poder trabajar con este dataset debe importarse a R. Utilizando el paquete MetabolomicsWorkbenchR (4) incluido dentro del paquete Bioconductor, es posible acceder directamente a los dataset contenidos en este repositorio. Adicionalmente, es posible importar estos dataset como un objeto de clase SummarizedExperiment directamente, que contenga los datos y metadatos del dataset.
+
+```{r}
+library(metabolomicsWorkbenchR)
+library(SummarizedExperiment)
+# Importar el dataset
+se = do_query(
+  context = 'study',
+  input_item = 'study_id',
+  input_value = 'ST003002',
+  output_item = 'SummarizedExperiment'
+)
+
+se
 ```
 
-## Including Plots
+La clase SummarizedExperiment es ampliamente utilizada en análisis ómicos (5,6). Una vez se dispone del dataset como objeto de la clase SummarizedExperiment puede comenzarse con la preparación de los datos para su posterior análisis. Este SummarizedExperiment contiene varios assays, o lo que es lo mismo almacena dos matrices de datos experimentales. Para llevar a cabo el trabajo propuesto se ha seleccionado únicamente una de ellas, AN004930.
+Se puede comprobar el contenido de la matriz de expresión que contiene los datos experimentales:
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+head(assay(se[["AN004930"]]))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+También es posible comprobar las dimensiones de esta matriz:
+
+```{r}
+dim(assay(se[["AN004930"]]))
+```
+Es posible acceder a los metadatos de las muestras, es decir, a la información sobre las columnas de la matriz de expresión:
+
+```{r}
+colData(se[["AN004930"]])
+```
+
+De la misma forma, se observa que las filas del objeto colData coinciden con las columnas de la matriz de expresión (assay), ya que representan las muestras del dataset.
+
+Por último, es posible acceder a los metadatos de los features o características.
+Este objeto contiene la información descriptiva sobre las filas (que son las características) de la matriz contenida en el objeto assay.
+
+```{r}
+rowData(se[["AN004930"]])
+```
+
+Para acceder a la información general del estudio y procedencia de este dataset, puede hacerse uso de la función genérica metadata. Este objeto almacena la información sobre el diseño del estudio u otros detalles relevantes para caracterizarlo.
+Para obtener otra información como los objetivos del estudio, el plan de trabajo o los análisis y resultados obtenidos, puede consultarse más información en el repositorio Metabolomics Workbench (3).
+
+```{r}
+metadata(se[["AN004930"]])
+```
+
+Las principales diferencias entre la clase SummarizedExperiment y la clase ExpressionSet son que la primera utiliza assays para contener los datos, mientras que ExpressionSet los almacena en una única matriz y se utiliza exprs() para acceder a ellos.
+Además, en la clase SummarizedExperimentla información de los genes, metabolitos u otras moléculas, se almacena en elementos rowData, y los datos de las muestras en colData.
+En cambio, para ExpressionSet se almacenan en featureData y phenoData, respectivamente.
+Los metadatos generales se almacenan en un elemento metadata para SummarizedExperiment y en experimentData para ExpressionSet.
+Además de las diferencias en los elementos que contienen los distintos tipos de datos, SummarizedExperiment ofrece una mayor flexibilidad puesto que puede manejar múltiples matrices de datos dentro de assays, mientras que ExpressionSet solo puede manejar una matriz principal.
+La clase SummarizedExperiment es una estructura más moderna porque se ha introducido más recientemente y permite el uso de múltiples formatos de datos, por otro lado, ExpressionSet es una estructura más antigua del paquete Bioconductor.
+
+Para poder llevar a cabo el análisis exploratorio de los datos se utilizará, en primer lugar, el POMA Workflow (7, 8) ya que resulta útil para explorar datos contenidos en una clase Summarized Experiment.
+Para ello, se instalan y cargan las librerías necesarias.
+
+```{r}
+#BiocManager::install("POMA")
+library(POMA)
+library(ggplot2)
+library(ggraph)
+library(plotly)
+```
+
+El POMA Workflow puede dividirse en tres pasos que consisten en la preparación de los datos, pre-procesamiento de los datos y por último, análisis estadístico.
+La preparación de los datos consiste en almacenar estos en un objeto de tipo SummarizedExperiment, algo que ya se ha realizado en los datos empleados para este trabajo.
+
+En el pre-procesado de los datos comprende la imputación de valores missing, la normalización de los datos y la detección de outliers.
+La presencia de valores missing en un dataset puede deberse a distintas razones tanto biológicas como técnicas. El paquete POMA ofrece distintos métodos de imputación que pueden llevarse a cabo para tratar estos valores faltantes. Por tanto, el primer paso del pre-procesado de los datos será tratar los missing, si existen. 
+
+```{r}
+# Imputar los valores missing con POMA
+imputed <- se[["AN004930"]] %>%
+  PomaImpute(method = "knn", zeros_as_na = TRUE, remove_na = TRUE, cutoff = 20)
+imputed
+```
+Al realizar la imputación de valores de valores missing (NA) en este dataset se observa que no existe ninguno, por lo tanto no se ha eliminado ninguna característica (feature) del mismo.
+
+El siguiente paso consiste en la normalización de los datos. Esto es debido a que algunos factores pueden introducir variabilidad en algunos datos metabolómicos teniendo una gran influencia en el resultado final de los análisis estadísticos que se lleven a cabo. Por ello, la normalización de los datos es un aspecto clave del proceso.
+Ya que en el paso anterior no se ha detectado (ni imputado) ningún valor missing, puede llevarse a cabo la normalización de los datos sobre el dataset completo.
+
+```{r}
+normalized <- se[["AN004930"]] %>%
+  PomaNorm(method = "log_pareto")
+
+normalized
+```
+De esta forma, ya se encuentra normalizados los datos del dataset. Se puede comprobar cuál ha sido el efecto de la normalización de los datos, llevando a cabo una comparación gráfico de los mismos antes y después de su normalización.
+
+```{r}
+PomaBoxplots(se[["AN004930"]], x = "samples")
+PomaBoxplots(normalized, x = "samples")
+```
+
+Se observa que tras normalizar los valores...
+
+```{r}
+PomaDensity(se[["AN004930"]], x = "features", theme_params = list(legend_position = "none"))
+PomaDensity(normalized, x = "features", theme_params = list(legend_position = "none"))
+```
+
+El último paso del pre-procesado de los datos consiste en la detección de outliers.
+Los outliers son valores que destacan por su valor muy distinto al de la mayoría de los demás valores restantes.
+Estos outliers pueden tener gran informacion en los resultados de los análisis que se lleven a cabo posteriormente.
+Conocer si existen valores outliers en los datos y decidir como tratarlos (incluirlos en los análisis, eliminarlos...) es un aspecto clave del pre-procesado de los datos.
+
+```{r}
+outlier_results <- normalized %>% 
+  PomaOutliers(method = "euclidean",
+               type = "median",
+               outcome = "Status",
+               coef = 2,
+               labels = FALSE)
+outlier_results$polygon_plot
+```
+
+```{r}
+outlier_results$data
+```
+Comprobamos que no existe ningún valor que se haya considerado como outlier por el paquete POMA, y por tanto ningún dato ha sido eliminado.
+Una vez se ha finalizado el pre-procesado de los datos, puede procederse al análisis de estos.
+Para llevar a cabo este análisis, se comenzará por el análisis estadístico univariado, para obtener una visión general de los datos.
+Aunque existen distintas opciones para llevar a cabo el análisis univariante de los datos, pueden seguirse los pasos propuestos por el POMA Workflow, que es el que se ha estado empleando hasta el momento.
+
+```{r}
+pca <- normalized %>%
+  PomaPCA(outcome = "Status")
+
+pca$factors_plot
+```
+
+```{r}
+poma_cor <- PomaCorr(normalized)
+poma_cor$correlations
+poma_cor$corrplot
+```
+
+
+```{r}
+# Extraer la matriz de datos del objeto SummarizedExperiment
+data <- assay(se[["AN004930"]])
+
+```
+
+```{r}
+boxplot(data, las=2, cex.axis=0.7)
+```
+
+
+
+```{r}
+percentage <- c(0.975)
+sds <- apply(data, MARGIN=1, FUN="sd")
+sel <- (sds>quantile(sds,percentage))
+data.sel <- data[sel, ]
+dim(data.sel)
+```
+
+```{r}
+distmeth <- c("euclidian")
+Distan <- dist(t(data.sel), method=distmeth)
+treemeth <- c("average")
+hc <- hclust(Distan, method=treemeth)
+plot(hc)
+```
+
+
+### Resultados
+
+### Discusión
+
+### Conclusiones
+
+### Referencias
+
+[1. Mi repositorio de GitHub](https://github.com/aitanavazfer/Vazquez-Fernandez-Aitana-PEC1)
+
+[2. Repositorio Metabolomics Workbench](https://www.metabolomicsworkbench.org/)
+
+[3. The role of gut microbiota in muscle mitochondria function, colon health, and sarcopenia: from clinical to bench (2)](https://www.metabolomicsworkbench.org/data/DRCCMetadata.php?Mode=Study&StudyID=ST003002&StudyType=MS&ResultType=1)
+
+[4. MetabolomicsWorkbenchR](https://www.bioconductor.org/packages/release/bioc/vignettes/metabolomicsWorkbenchR/inst/doc/Introduction_to_metabolomicsWorkbenchR.html)
+
+[5. SummarizedExperiment (apuntes de clase)](https://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html) 
+
+[6. Información adicional sobre la clase SummarizedExperiment](https://uclouvain-cbio.github.io/bioinfo-training-02-rnaseq/sec-se.html) 
+
+[7. POMA Workflow](http://bioconductor.jp/packages/3.16/bioc/vignettes/POMA/inst/doc/POMA-demo.html#) 
+
+[8. POMA Workflow actualizado](https://www.bioconductor.org/packages/release/bioc/vignettes/POMA/inst/doc/POMA-workflow.html)
