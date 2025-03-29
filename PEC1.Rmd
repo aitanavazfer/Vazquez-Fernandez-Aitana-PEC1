@@ -1,5 +1,5 @@
 ---
-title: "PEC1"
+title: "PEC1 - Análisis de datos ómicos"
 author: "Aitana Vázquez Fernández"
 date: "2025-03-20"
 output:
@@ -17,17 +17,19 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Informe PEC1 - Análisis de datos ómicos
-
 ### Abstract
 
 ### Objetivos
 
 El objetivo general de este trabajo es realizar las tareas propuestas en la PEC1 y generar un informe con los resultados, utilizando para ello los conocimientos adquiridos a lo largo de este reto sobre tecnologías ómicas, el uso de de la herramienta de control de versiones Git y los repositorios en GitHub, el paquete de Bioconductor y sus clases, y por último herramientas estadísticas para la exploración de los datos.
 Como objetivos específicos se plantean los siguientes:
+
 -Crear un repositorio de GitHub para llevar a cabo el control de versiones del código de R y volcar los archivos resultados del trabajo.
+
 -Seleccionar un dataset con el que trabajar y presentarlo en formato clase SummarizedExperiment
--Llevar a cabo un análisis exploratorio de los datos del dataset empleando para ello las distintas técnicas vistas. 
+
+-Llevar a cabo un análisis exploratorio de los datos del dataset empleando para ello las distintas técnicas vistas.
+Para ello se utilizará tanto el POMA Workflow como los métodos analíticos vistos en el reto.
 
 ### Métodos
 
@@ -36,18 +38,48 @@ El código R para la exploración de los datos se encuentra debidamente comentad
 
 El dataset de metabolómica seleccionado para llevar a cabo este trabajo proviene del repositorio Metabolomics Workbench (2).
 El dataset pertenece al estudio "The role of gut microbiota in muscle mitochondria function, colon health, and sarcopenia: from clinical to bench (2)" (3).
-Brevemente este estudio pretende investigar en humanos (Homo Sapiens) cómo la microbiota se rleaciona con la sarcopenia, puesto que podrían encontrarse potencialmente asociadas.
-Para investigar el papel de la microbiota en la sarcopenia se lleva a cabo la comparación de la microbiota intestinal y la composición de metabolitos entre invividuos mayores con y sin sarcopenia.
-La razón por la que se ha elegido este dataset para el desarollo del trabajo se debe a la relevancia que ha cobrado el estudio de la microbiota y sus metabolitos en los últimos años, puesto que parece que podría relacionarse con multitud de enfermedades o procesos patológicos, algunos de ellos asociados al envejecimiento como por ejemplo, aunque no únicamente, la sarcopenia.
+Brevemente este estudio pretende investigar en humanos (Homo Sapiens) cómo la microbiota se relaciona con la sarcopenia, puesto que podrían encontrarse potencialmente asociadas.
+Para investigar el papel de la microbiota en la sarcopenia se lleva a cabo la comparación de la microbiota intestinal y la composición de metabolitos entre individuos mayores con y sin sarcopenia.
+La razón por la que se ha elegido este dataset para el desarrollo del trabajo se debe a la relevancia que ha cobrado el estudio de la microbiota y sus metabolitos en los últimos años, puesto que parece que podría relacionarse con multitud de enfermedades o procesos patológicos, algunos de ellos asociados al envejecimiento como por ejemplo, aunque no únicamente, la sarcopenia.
 
-Para poder trabajar con este dataset debe importarse a R.
-Utilizando el paquete MetabolomicsWorkbenchR (4) incluido dentro del paquete Bioconductor, es posible acceder directamente a los dataset contenidos en este repositorio.
-Adicionalmente, es posible importar estos dataset como un objeto de clase SummarizedExperiment directamente, que contenga los datos y metadatos del dataset.
+Para poder trabajar con el dataset seleccionado este debe importarse a R, lo cual puede realizarse utilizando el paquete MetabolomicsWorkbenchR (4).
+Con este paquete, incluido dentro de Bioconductor, es posible acceder directamente a los dataset contenidos en el repositorio.
+Adicionalmente, es posible importar estos dataset como un objeto de clase SummarizedExperiment directamente en R, que contenga los datos y metadatos del dataset.
+Para obtener otra información como los objetivos del estudio, el plan de trabajo o los análisis y resultados obtenidos, puede consultarse más información en el repositorio Metabolomics Workbench (3).
 
-```{r}
+La clase SummarizedExperiment es ampliamente utilizada en análisis ómicos (5,6).
+Una vez se dispone del dataset como objeto de la clase SummarizedExperiment puede comenzarse con la preparación de los datos para su posterior análisis.
+
+Para llevar a cabo el análisis exploratorio de los datos se utilizará inicialmente el POMA Workflow (7, 8) ya que resulta útil para explorar datos contenidos en una clase Summarized Experiment.
+El POMA Workflow puede dividirse en tres pasos que consisten en la preparación de los datos, pre-procesamiento de los datos y por último, análisis estadístico.
+La preparación de los datos consiste en almacenar estos en un objeto de tipo SummarizedExperiment.
+En el pre-procesado de los datos comprende la imputación de valores missing, la normalización de los datos y la detección de outliers.
+Una vez se haya realizado el pre-procesado de los datos se continuará realizando el análisis estadístico univariado de los datos, con la prueba t.
+Posteriormente, se realizará análisis multivariado para continuar con la exploración de los datos, empleando análisis de componentes principales (PCA) y calcular la correlación entre variables.
+
+Ya sin utilizar el POMA Workflow, se continuará el análisis exploratorio de los datos siguiendo las indicaciones proporcionadas en el reto (9, 10).
+Para poder realizar estos análisis debe almacenarse la matriz de datos de la clase Summarized Experiment como matriz datos de R para poder trabajar con ella.
+Por la forma en la que se encuentran dispuestos los datos en la matriz, es necesario trasponerla previamente para tener las muestras en las filas de la matriz en lugar de en las columnas.
+Se seguirá el paso a paso necesario para realizar análisis de componentes principales (PCA) de los datos (aunque ya se ha realizado el PCA mediante el paquete POMA), lo que permitirá utilizar otro enfoque y también comparar resultados y ver si ambos enfoques son equivalentes.
+
+Otra posible opción sería llevar a cabo un análisis para detectar si se ha dado el efecto batch en nuestros datos.
+Este efecto puede afectar a los datos cuando muestras que se han producido en un mismo lote se parecen más entre ellas que las producidas en otros lotes.
+Puede controlarse con un diseño experimental adecuado, pero también puede controlarse en los análisis (10).
+Sin embargo, en el caso de este dataset en particular no es posible analizar la presencia de este efecto puesto que no se dispone información sobre el lote del que proceden las muestras.
+
+Por último, se realizará un cluster analysis o análisis de conglomerados, que permite agrupar las muestras en distintos grupos.
+En este caso se realizará una agrupación jerárquica de las muestras del dataset, para lo cual la estructura utilizada será el dendrograma.
+Se realizará la agrupación jerárquica basada en las distancias euclidianas y "average linkage", y también basadas en la correlación de Pearson tanto para las muestras del dataset como los metabolitos.
+
+### Resultados
+
+```{r echo = TRUE, results = 'hide', message = FALSE, warning = FALSE}
 library(metabolomicsWorkbenchR)
 library(SummarizedExperiment)
+```
 
+Se importa el dataset a R.
+```{r}
 # Importar el dataset desde Metabolomics Workbench
 se = do_query(
   context = 'study',
@@ -59,27 +91,29 @@ se = do_query(
 se
 ```
 
-La clase SummarizedExperiment es ampliamente utilizada en análisis ómicos (5,6).
-Una vez se dispone del dataset como objeto de la clase SummarizedExperiment puede comenzarse con la preparación de los datos para su posterior análisis.
 Este SummarizedExperiment contiene varios assays, o lo que es lo mismo almacena dos matrices de datos experimentales.
 Para llevar a cabo el trabajo propuesto se ha seleccionado únicamente una de ellas, AN004930.
-Se puede comprobar el contenido de la matriz de expresión que contiene los datos experimentales:
 
-```{r}
+El output de estos comandos se muestra en los anexos, debido a su extensión.
+
+Se puede comprobar el contenido de la matriz de expresión que contiene los datos experimentales.\
+Los resultados
+
+```{r echo = T, results = 'hide'}
 # Comprobar el contenido de la matriz de expresión
 head(assay(se[["AN004930"]]))
 ```
 
 También es posible comprobar las dimensiones de esta matriz:
 
-```{r}
+```{r echo = T, results = 'hide'}
 #Dimensiones de la matriz
 dim(assay(se[["AN004930"]]))
 ```
 
 Es posible acceder a los metadatos de las muestras, es decir, a la información sobre las columnas de la matriz de expresión:
 
-```{r}
+```{r echo = T, results = 'hide'}
 # Comprobar los metadatos de las muestras
 colData(se[["AN004930"]])
 ```
@@ -89,24 +123,31 @@ De la misma forma, se observa que las filas del objeto colData coinciden con las
 Por último, es posible acceder a los metadatos de los features o características.
 Este objeto contiene la información descriptiva sobre las filas (que son las características) de la matriz contenida en el objeto assay.
 
-```{r}
+```{r echo = T, results = 'hide'}
 # Comprobar los metadatos de los features
 rowData(se[["AN004930"]])
 ```
 
 Para acceder a la información general del estudio y procedencia de este dataset, puede hacerse uso de la función genérica metadata.
 Este objeto almacena la información sobre el diseño del estudio u otros detalles relevantes para caracterizarlo.
-Para obtener otra información como los objetivos del estudio, el plan de trabajo o los análisis y resultados obtenidos, puede consultarse más información en el repositorio Metabolomics Workbench (3).
 
-```{r}
-# Comprobar la información general del dataset
-metadata(se[["AN004930"]])
-```
+Este dataset se encuentra almacenado en la clase SummarizedExperiment, que es una estructura de datos ampliamente utilizada en las ómicas.
+La matriz de expresión (assay) tiene 974 filas (metabolitos) y 51 columnas (muestras).
+Los metadatos de las muestras, contenidos en el objeto colData incluyen información como el identificador de la muestra, del estudio, el origen de las muestras y el status del individuo, es decir, la presencia o ausencia de sarcopenia.
+Los metadatos de los metabolitos, en el objeto rowData contienen información sobre el nombre de los metabolitos, su identificador, o su nombre de referencia.
+Por último, los metadatos del estudio nos proporcionan información sobre la procedencia del dataset.
 
-Para poder llevar a cabo el análisis exploratorio de los datos se utilizará, en primer lugar, el POMA Workflow (7, 8) ya que resulta útil para explorar datos contenidos en una clase Summarized Experiment.
-Para ello, se instalan y cargan las librerías necesarias.
+Las principales diferencias entre la clase SummarizedExperiment y la clase ExpressionSet son que la primera utiliza assays para contener los datos, mientras que ExpressionSet los almacena en una única matriz y se utiliza exprs() para acceder a ellos.
+Además, en la clase SummarizedExperimentla información de los genes, metabolitos u otras moléculas, se almacena en elementos rowData, y los datos de las muestras en colData.
+En cambio, para ExpressionSet se almacenan en featureData y phenoData, respectivamente.
+Los metadatos generales se almacenan en un elemento metadata para SummarizedExperiment y en experimentData para ExpressionSet.
+Además de las diferencias en los elementos que contienen los distintos tipos de datos, SummarizedExperiment ofrece una mayor flexibilidad puesto que puede manejar múltiples matrices de datos dentro de assays, mientras que ExpressionSet solo puede manejar una matriz principal.
+La clase SummarizedExperiment es una estructura más moderna porque se ha introducido más recientemente y permite el uso de múltiples formatos de datos, por otro lado, ExpressionSet es una estructura más antigua del paquete Bioconductor.
 
-```{r}
+El POMA Workflow puede dividirse en tres pasos que consisten en la preparación de los datos, pre-procesamiento de los datos y por último, análisis estadístico.
+La preparación de los datos consiste en almacenar estos en un objeto de tipo SummarizedExperiment, algo que ya se ha realizado en los datos empleados para este trabajo.
+
+```{r echo = TRUE, results = 'hide', message = FALSE, warning = FALSE}
 #BiocManager::install("POMA")
 library(POMA)
 library(ggplot2)
@@ -114,15 +155,12 @@ library(ggraph)
 library(plotly)
 ```
 
-El POMA Workflow puede dividirse en tres pasos que consisten en la preparación de los datos, pre-procesamiento de los datos y por último, análisis estadístico.
-La preparación de los datos consiste en almacenar estos en un objeto de tipo SummarizedExperiment, algo que ya se ha realizado en los datos empleados para este trabajo.
-
 En el pre-procesado de los datos comprende la imputación de valores missing, la normalización de los datos y la detección de outliers.
 La presencia de valores missing en un dataset puede deberse a distintas razones tanto biológicas como técnicas.
 El paquete POMA ofrece distintos métodos de imputación que pueden llevarse a cabo para tratar estos valores faltantes.
 Por tanto, el primer paso del pre-procesado de los datos será tratar los missing, si existen.
 
-```{r}
+```{r echo = T, results = 'hide'}
 # Imputar los valores missing con POMA
 imputed <- se[["AN004930"]] %>%
   PomaImpute(method = "knn", zeros_as_na = TRUE, remove_na = TRUE, cutoff = 20)
@@ -133,10 +171,9 @@ Al realizar la imputación de valores de valores missing (NA) en este dataset se
 
 El siguiente paso consiste en la normalización de los datos.
 Esto es debido a que algunos factores pueden introducir variabilidad en algunos datos metabolómicos teniendo una gran influencia en el resultado final de los análisis estadísticos que se lleven a cabo.
-Por ello, la normalización de los datos es un aspecto clave del proceso.
 Ya que en el paso anterior no se ha detectado (ni imputado) ningún valor missing, puede llevarse a cabo la normalización de los datos sobre el dataset completo.
 
-```{r}
+```{r echo = T, results = 'hide'}
 # Normalización de los datos
 normalized <- se[["AN004930"]] %>%
   PomaNorm(method = "log_pareto")
@@ -144,7 +181,6 @@ normalized <- se[["AN004930"]] %>%
 normalized
 ```
 
-De esta forma, ya se encuentra normalizados los datos del dataset.
 Se puede comprobar cuál ha sido el efecto de la normalización de los datos, llevando a cabo una comparación gráfico de los mismos antes y después de su normalización.
 
 ```{r}
@@ -158,11 +194,11 @@ PomaDensity(normalized, x = "features", theme_params = list(legend_position = "n
 
 El último paso del pre-procesado de los datos consiste en la detección de outliers.
 Los outliers son valores que destacan por su valor muy distinto al de la mayoría de los demás valores restantes.
-Estos outliers pueden tener gran informacion en los resultados de los análisis que se lleven a cabo posteriormente.
+Estos outliers pueden tener gran influencia en los resultados de los análisis que se lleven a cabo posteriormente.
 Conocer si existen valores outliers en los datos y decidir como tratarlos (incluirlos en los análisis, eliminarlos...) es un aspecto clave del pre-procesado de los datos.
 Respecto a la representación de los datos, se ha llevado a cabo la representación de los mismos en función de su 'Status' es decir si son muestras de individuos con sarcopenia o sin sarcopenia.
 
-```{r}
+```{r echo = T, results = 'hide'}
 # Detección y eliminación (si se dan) de outliers
 outlier_results <- normalized %>% 
   PomaOutliers(method = "euclidean",
@@ -173,21 +209,23 @@ outlier_results <- normalized %>%
 outlier_results$polygon_plot
 ```
 
-De esta manera, el pre-procesamiento de los datos se encuentra finalizado, y serán los que se utilizarán en posteriores análisis.
+Se comprueba que no existe ningún valor que se haya considerado como outlier por el paquete POMA, y por tanto ningún dato ha sido eliminado.
 
-```{r}
+```{r echo = T, results = 'hide'}
 # Guardar los datos una vez se ha finalizado el pre-procesado
 pre_processed <- outlier_results$data
 pre_processed
 ```
 
-Se comprueba que no existe ningún valor que se haya considerado como outlier por el paquete POMA, y por tanto ningún dato ha sido eliminado.
-Una vez se ha finalizado el pre-procesado de los datos, puede procederse al análisis de estos.
+Los resultados de pre-procesado de los datos con el POMA Workflow muestra que no se encuentran valores missing en este dataset, por tanto no es necesario realizar ninguna técnica de imputación o eliminación de los valores missing.
+Para la normalización de los datos, se empleó el método de log-pareto que permite reducir la variabilidad entre los metabolitos y mejorar la comparabilidad entre muestras.
+Los boxplots y los gráficos de densidad generados para los datos antes y después de la normalización, permite observar como tras la normalización la distribución de los valores presentan una menor dispersión, facilitando análisis posteriores.
+Para la detección de outliers en el dataset, se utilizó la distancia euclidina, y se utilizó la variable de Status, es decir, individuos con y sin sarcopenia como outcome para la detección de estos outliers.
+Sin embargo, no se identifica ningún valor considerado outlier mediante esta técnica, por lo que puede considerarse que los valores del dataset tienen una distribución bastante homogénea.
 
-Para llevar a cabo este análisis, se comenzará por el análisis estadístico univariado, para obtener una visión general de los datos.
-Aunque existen distintas opciones para llevar a cabo el análisis univariante de los datos, pueden seguirse los pasos propuestos por el POMA Workflow, que es el que se ha estado empleando hasta el momento.
+Con el pre-procesamiento de los datos finalizado, se comenienza con el análisis exploratorio de los mismos, realizando análisis univariado, siguiendo el POMA Workflow.
 
-```{r}
+```{r echo = T, results = 'hide'}
 # Es necesario establecer "Status" que diferencia entre ambos grupos 
 # como variable que se empleará para realizar el ttest
 pre_processed@colData <- pre_processed@colData[, c("Status", setdiff(colnames(pre_processed@colData), "Status"))]
@@ -195,9 +233,11 @@ pre_processed@colData <- pre_processed@colData[, c("Status", setdiff(colnames(pr
 head(PomaUnivariate(pre_processed, method = "ttest"))
 ```
 
+Tras aplicar la prueba t (ttest), para comparar los niveles de los metabolitos entre los individuos con y sin sarcopenia, se encontrar diferencias estadísticamente significativas en múltiples metabolitos, lo que indica que efectivamente algunos de estos se asocian de forma diferente entre los individuos con y sin la patología.
+Aunque la prueba t requiera el cumplimiento de varias condiciones para poder aplicarse, los datos se han normalizado en pasos anteriores y el número de muestras aunque no muy elevado (n = 51) es suficiente para aplicar esta prueba, en lugar de una no parámetrica como la de Mann-Whitney.
+
 Una vez se ha realizado el anális univariado, se lleva a cabo el análisis multivariado.
-Todo ello, con el objetivo de continuar realizar un análisis exploratorio de estos datos que permitan sacar algunas conclusiones sobre los mismos.
-El Workflow POMA permite llevar a cabo análisis de componentes principales (PCA) de forma relativamente sencilla, por lo que se utilizarán los datos (normalizados) para realizar el PCA.
+El Workflow POMA permite llevar a cabo análisis de componentes principales (PCA) de forma relativamente sencilla, por lo que se utilizan los datos (normalizados) para realizar el PCA.
 
 ```{r}
 # Análisis de componentes principales
@@ -207,20 +247,26 @@ pca <- normalized %>%
 pca$factors_plot
 ```
 
-Otra opción del paquete POMA es calcular las correlaciones entre variables.
-Esto permite la posibilidad, además, de obtener las correlaciones ordenadas de forma ordenada de las variables más correlacionadas a las menos correlacionadas.
+Los resultados PCA, permiten explorar la estructura de los datos y reducir dimensionalidad.
+Los resultados gráficos permiten observar como los primeros dos componentes principales explican una variabilidad baja/moderada de los datos.
+El PC1 explica un 11.8% de la variabilidad de los datos y el PC2 explica un 5.19%.
+De esta forma, se observa que parece que las muestras de individuos con sarcopenia podrían tender a agruparse de manera diferente a las de individuos sin la enfermedad, aunque la variabilidad explicada por los 2 PCs no es muy elevada.
 
-```{r}
+Otra opción del paquete POMA es calcular las correlaciones entre variables.
+Esto permite además, obtener las correlaciones ordenadas de las variables más correlacionadas a las menos correlacionadas.
+
+```{r echo = T, results = 'hide'}
 # Cálculo de las correlaciones
 poma_cor <- PomaCorr(normalized)
 head(poma_cor$correlations)
 ```
 
-A continuación, se llevará a cabo el análisis exploratorio de los datos siguiendo las indicaciones proporcionadas en el reto (9, 10).
-El primer paso es almacenar la matriz de datos del objeto SummarizedExperiment como objeto para poder trabajar con ella.
-Por la forma en la que se encuentran dispuestos los datos en la matriz, es necesario trasponerla previamente para tener las muestras en las filas de la matriz en lugar de en las columnas.
+El análisis de correlación entre las variables, calculándose por defecto los coeficientes de Pearson, muestra que existen metabolitos fuertemente correlacionados entre sí.
 
-```{r}
+Continuando con los análisis, se llevó a cabo PCA por otra vía en lugar de utilizando la herramienta de POMA Workflow.
+De esta manera, aunque ya se ha realizado el PCA mediante el paquete POMA, puede realizarse por otra vía, y permitirá también comparar resultados y ver si ambos enfoques son equivalentes.
+
+```{r echo = T, results = 'hide'}
 # Extraer la matriz de datos del objeto SummarizedExperiment
 data <- assay(normalized)
 data <- as.matrix(data)
@@ -229,22 +275,19 @@ data <- as.matrix(data)
 data <- t(data)
 ```
 
-Se seguirá el paso a paso para llevar a cabo un análisis de componentes principales (PCA) de los datos.
-De esta manera, aunque ya se ha realizado el PCA mediante el paquete POMA, puede realizarse por otra vía, y permitirá también comparar resultados y ver si ambos enfoques son equivalentes.
-
 El primer paso consiste en escalar los datos para poder trabajar con la matriz de covarianzas de los datos centrados.
 En los siguientes outputs solo se mostrará parta del output con las funciones head() o cat("parte del output"), puesto que resulta demasiado extenso para mostrarse completamente.
 
-```{r}
+```{r echo = T, results = 'hide'}
 # Se escalan los datos
 data <- scale(data, center = TRUE, scale=FALSE)
 head(apply(data,2, mean))
 
 ```
 
-A continuación, se calcula la mtriz de varianzas ajustada dividiendo entre n, y posteriormente se calcula la matriz de correlaciones.
+A continuación, se calcula la matriz de varianzas ajustada dividiendo entre n, y posteriormente se calcula la matriz de correlaciones.
 
-```{r}
+```{r echo = T, results = 'hide'}
 n<- dim(data)[1]
 S<-cov(data)*(n-1)/n
 cat("S output:", "\n", S[1:50], "\n")
@@ -253,10 +296,12 @@ R<-cor(data)
 cat("R output:", "\n", R[1:50], "\n")
 ```
 
+Tras escalar los datos, la matriz de varianzas ajustada (S) y la matriz de correlaciones (R) muestran las relaciones entre los metabolitos.
+
 Se comienza con el análisis PCA, empezando por el cálculo de las componentes principales.
 Los eigen\$vectors son las coordenadas de las componentes principales.
 
-```{r}
+```{r echo = T, results = 'hide'}
 EIG <- eigen(S)
 
 cat("EIG values:", "\n", EIG$values[1:50], "\n")
@@ -265,6 +310,8 @@ cat("EIG vectors:", "\n", EIG$vectors[1:50], "\n")
 ```
 
 Para obtener la transformación de los datos asociada a las componentes principales se obtiene multiplicando la matriz original por la matriz de vectores propio, y de esta forma llevar a cabo la representación de los componentes.
+
+Los valores propios (eigenvalues) y los vectores propios (eigenvectors) de la matriz de covarianzas se obtenien para posteriomente determinar los componentes principales.
 
 ```{r}
 eigenVecs1 <- EIG$vectors
@@ -280,15 +327,13 @@ plot(PCAS1[,1], PCAS1[,2], main = "Gut microbiota. 2 primeras PCs",
      xlab=xlabel, ylab=ylabel)
 ```
 
-Otra posible opción sería llevar a cabo un análisis para detectar si se ha dado el efecto batch en nuestros datos.
-Este efecto puede afectar a los datos cuando muestras que se han producido en un mismo lote se parecen más entre ellas que las producidas en otros lotes.
-Este efecto puede controlarse con un diseño experimental adecuado, pero también puede controlarse en los análisis.
-Sin embargo, en el caso de este dataset en particular no es posible analizar la presencia de este efecto puesto que no se dispone información sobre el lote del que proceden las muestras.
+La representación gráfica muestra que los dos primeros componentes principales (PCA1 y PCA2) explicaron el 11.93% y 5.75% de la varianza total de los datos, en cada caso.
+Es posible observar que los resultados obtenidos en la realización de este PCA son muy similares a los resultados que se obtenían realizando el PCA con el paquete POMA Workflow, y las diferencias se deben a diferencias en los métodos empleados para realizar los cálculos.
 
-Por último, es posible llevar a cabo un cluster analysis o análisis de conglomerados, que permite agrupar las muestras en distintos grupos.
+Por último, se realiza un cluster analysis o análisis de conglomerados, que permite agrupar las muestras en distintos grupos.
 En este caso se realizará una agrupación jerárquica de las muestras del dataset, para lo cual la estructura utilizada será el dendrograma.
 
-En primer lugar, aunque ya se ha confirmado que los datos se encuentran normalizados, puesto que se ha utilizado el POMA Workflow para ello, se comprueba mediante un diagrama de cajas (nuevamente), que efectivamente los datos se encuentran normalizados.
+Se comprueba mediante un diagrama de cajas (nuevamente), que efectivamente los datos se encuentran normalizados.
 
 ```{r}
 data <- assay(normalized)
@@ -297,9 +342,9 @@ data <- as.matrix(data)
 boxplot(data, las=2, cex.axis=0.7)
 ```
 
-Posteriormente, se puede seleccionar solo aquellos metabolitos que posean el 1% de las desviaciones estándar más altas, ya que es una práctica habitual de los estudios de clasificación puesto que se considera que son los individuos con más variabilidad los que son más relevantes para poder realizar las agrupaciones.
+Se seleccionan solo aquellos metabolitos que posean el 1% de las desviaciones estándar más altas, ya que es una práctica habitual de los estudios de clasificación puesto que se considera que son los individuos con más variabilidad los que son más relevantes para poder realizar las agrupaciones.
 
-```{r}
+```{r echo = T, results = 'hide'}
 percentage <- c(0.975)
 sds <- apply(data, MARGIN=1, FUN="sd")
 sel <- (sds>quantile(sds,percentage))
@@ -317,6 +362,9 @@ hc <- hclust(Distan, method=treemeth)
 plot(hc)
 ```
 
+El dendrograma muestra una división de las muestras en dos grupos o clusters principales, que a su vez se subdividen después en más grupos.
+Esta agrupación pueden reflejar diferencias subyacentes en las características de las distintas muestras en función de en qué grupo son agrupadas.
+
 Por último, también es posible agrupar tanto las muestras del dataset como los metabolitos en función de los coeficientes de correlación.
 En este caso, se calculará la correlación de Pearson puesto que es la que se ha estado trabajando a lo largo de estos análisis, aunque también podría realizarse la agrupación jerárquica basada en la correlación de Spearman.
 
@@ -333,10 +381,31 @@ hc.cor.rows <- hclust(dist.pe.rows, method=treemeth)
 plot(hc.cor.rows)
 ```
 
-
-### Resultados
+El dendrograma obtenido por el método de Pearson, muestra una estructura similar al obtenido previamente, ya que se observa que también hay dos agrupaciones o clusterings principales de las muestras, aunque presente algunas diferencias con el anterior.
+En este dendrograma también pueden observarse múltiples divisiones o subgrupos.\
+Por último, el dendrograma de los metabolitos también identifica dos o podrían considerarse tres clusters principales.
 
 ### Discusión
+
+El análisis realizado ha permitido explorar de manera detallada los datos metabolómicos de este estudio sobre la relación entre la microbiota intestinal y la sarcopenia.
+Durante el pre-procesamiento de los datos, se confirmó que no existían valores missing, lo que indica que la calidad del dataset parece ser alta.
+La normalización de los datos permitió reducir la variabilidad de los metabolitos y mejorar la comparabilidad entre muestras.
+Además, no se detectaron outliers significativos, lo que sugiere que la distribución de los datos es relativamente homogénea.
+
+El análisis univariado utilizando la prueba t permitió identificar a los metabolitos con diferencias significativas entre los dos grupos de estudio, individuos con y sin sarcopenia, lo que apoyaría la hipótesis del estudio de que la microbiota intestinal y su composición metabólica podrían estar relacionadas con la sarcopenia.
+
+El análisis de componentes principales (PCA) mostró que la variabilidad de los datos puede explicarse utilizando algunos componentes principales, sin embargo, la variabilidad explicada por estos se considera relativamente baja.
+Esto puede deberse a una gran hetorogeneidad entre las muestras comparadas, donde son múltiples factores los que influyen en la variabilidad de los datos y no únicamente el estado de sarcopenia o no sarcopenia de las muestras.
+El hecho de que la variabilidad explicada sea relativamente baja significa que hay mucha variabilidad en los datos que no se está capturando en los dos primeros componentes principales del análisis.
+Sin embargo, las similitudes en los resultados obtenidos realizando el PCA con el paquete POMA o el realizado paso a paso, refuerzan la robustez de los resultados.
+El POMA Workflow puede ser más sencillo y directo de implementar cuando se dispone de los datos contenidos en un objeto de clase SummarizedExperiment, puesto que el paquete está diseñado para trabajar con este tipo de objetos.
+
+La correlación entre las variables permitió identificar metabolitos fuertemente correlacionados, al igual que también resulta relevante conocer si la correlación entre otros metabolitos es baja y por qué.
+Los resultados obtenidos de las correlaciones entre metabolitos muestran que muchos de ellos se encuentran altamentente correlacionado, lo cual es esperable al tratarse de metabolitos procedentes del mismo tipo de muestras, pese a que pertenezcan a grupos de individuos diferentes.
+Además, ya se observaba en los resultados del PCA que aunque los componentes principales permiten explicar parte de la variabilidad observada en los datos, es probable que existan otros factores que estén influyendo en la variabilidad de los mismos, y no solo el hecho de que sean muestran de indivdiuos con y sin sarcopenia.
+
+El análisis de agrupamiento jerárquico mostró la separación de las muestras en función de distintos perfiles.
+Aunque puede apreciarse una cierta agrupación o clustering tanto de las muestras, como de los metabolitos en uno de los dendrogramas obtenidos por el método de Pearson, la separación no es completamente definida, lo que refuerza la hipótesis de que existen otros factores que podrían influir en la agrupación de las muestras y metabolitos detectados en las muestras analizadas, aunque sí parecen observarse dos grandes grupos o clusters desde los que se subdividen las demás agrupaciones.
 
 ### Conclusiones
 
