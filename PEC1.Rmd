@@ -19,6 +19,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Abstract
 
+La sarcopenia, una condición caracterizada por la pérdida progresiva de masa y función muscular, ha sido relacionada con la microbiota intestinal y su perfil metabolómico.
+En este trabajo se emplean técnicas de análisis metabolómico para explorar dicha relación utilizando datos obtenidos del repositorio Metabolomics Workbench.
+Los datos se organizaron en un objeto SummarizedExperiment y fueron analizados mediante el POMA Workflow y análisis estadísticos exploratorios.
+Los resultados principales sugieren que existen metabolitos significativamente asociados con la sarcopenia, aunque la variabilidad explicada por los componentes principales es relativamente baja.
+Además, el análisis de correlación muestra altas correlaciones entre muchos de los metabolitos analizados, y el análisis de agrupamiento jerárquico muestra cierta separación entre grupos, aunque no completamente definida.
+Estos hallazgos resaltan que la relación entre la microbiota y la sarcopenia empleando metabolitos para su estudio es compleja y es necesaria mayor investigación para comprender los mecanismos que intervienen en esta relación.
+
 ### Objetivos
 
 El objetivo general de este trabajo es realizar las tareas propuestas en la PEC1 y generar un informe con los resultados, utilizando para ello los conocimientos adquiridos a lo largo de este reto sobre tecnologías ómicas, el uso de de la herramienta de control de versiones Git y los repositorios en GitHub, el paquete de Bioconductor y sus clases, y por último herramientas estadísticas para la exploración de los datos.
@@ -73,7 +80,7 @@ Se realizará la agrupación jerárquica basada en las distancias euclidianas y 
 
 ### Resultados
 
-```{r echo = TRUE, results = 'hide', message = FALSE, warning = FALSE}
+```{r echo = F, results = 'hide', message = FALSE, warning = FALSE}
 library(metabolomicsWorkbenchR)
 library(SummarizedExperiment)
 ```
@@ -87,45 +94,22 @@ se = do_query(
   input_value = 'ST003002',
   output_item = 'SummarizedExperiment'
 )
-
-se
 ```
 
-Este SummarizedExperiment contiene varios assays, o lo que es lo mismo almacena dos matrices de datos experimentales.
-Para llevar a cabo el trabajo propuesto se ha seleccionado únicamente una de ellas, AN004930.
+Este SummarizedExperiment contiene dos assays (o matrices de datos experimentales). Para este trabajo se ha seleccionado únicamente una de ellas, AN004930.
 
-El output de estos comandos se muestra en los anexos, debido a su extensión.
+El código completo y output de los comandos se muestra en el anexo, aquí solo se presentarán los resultados más relevantes (debido a su extensión).
 
-Se puede comprobar el contenido de la matriz de expresión que contiene los datos experimentales.\
-Los resultados
+Se explora la información contenida en el SummarizedExperiment:
 
 ```{r echo = T, results = 'hide'}
 # Comprobar el contenido de la matriz de expresión
 head(assay(se[["AN004930"]]))
-```
-
-También es posible comprobar las dimensiones de esta matriz:
-
-```{r echo = T, results = 'hide'}
 #Dimensiones de la matriz
 dim(assay(se[["AN004930"]]))
-```
-
-Es posible acceder a los metadatos de las muestras, es decir, a la información sobre las columnas de la matriz de expresión:
-
-```{r echo = T, results = 'hide'}
 # Comprobar los metadatos de las muestras
 colData(se[["AN004930"]])
-```
-
-De la misma forma, se observa que las filas del objeto colData coinciden con las columnas de la matriz de expresión (assay), ya que representan las muestras del dataset.
-
-Por último, es posible acceder a los metadatos de los features o características.
-Este objeto contiene la información descriptiva sobre las filas (que son las características) de la matriz contenida en el objeto assay.
-
-```{r echo = T, results = 'hide'}
-# Comprobar los metadatos de los features
-rowData(se[["AN004930"]])
+metadata(se[["AN004930"]])
 ```
 
 Para acceder a la información general del estudio y procedencia de este dataset, puede hacerse uso de la función genérica metadata.
@@ -144,10 +128,10 @@ Los metadatos generales se almacenan en un elemento metadata para SummarizedExpe
 Además de las diferencias en los elementos que contienen los distintos tipos de datos, SummarizedExperiment ofrece una mayor flexibilidad puesto que puede manejar múltiples matrices de datos dentro de assays, mientras que ExpressionSet solo puede manejar una matriz principal.
 La clase SummarizedExperiment es una estructura más moderna porque se ha introducido más recientemente y permite el uso de múltiples formatos de datos, por otro lado, ExpressionSet es una estructura más antigua del paquete Bioconductor.
 
-El POMA Workflow puede dividirse en tres pasos que consisten en la preparación de los datos, pre-procesamiento de los datos y por último, análisis estadístico.
+El POMA Workflow se divide en tres pasos que consisten en la preparación de los datos, pre-procesamiento de los datos y por último, análisis estadístico.
 La preparación de los datos consiste en almacenar estos en un objeto de tipo SummarizedExperiment, algo que ya se ha realizado en los datos empleados para este trabajo.
 
-```{r echo = TRUE, results = 'hide', message = FALSE, warning = FALSE}
+```{r echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 #BiocManager::install("POMA")
 library(POMA)
 library(ggplot2)
@@ -160,45 +144,44 @@ La presencia de valores missing en un dataset puede deberse a distintas razones 
 El paquete POMA ofrece distintos métodos de imputación que pueden llevarse a cabo para tratar estos valores faltantes.
 Por tanto, el primer paso del pre-procesado de los datos será tratar los missing, si existen.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F, results = 'hide'}
 # Imputar los valores missing con POMA
 imputed <- se[["AN004930"]] %>%
   PomaImpute(method = "knn", zeros_as_na = TRUE, remove_na = TRUE, cutoff = 20)
 imputed
 ```
 
-Al realizar la imputación de valores de valores missing (NA) en este dataset se observa que no existe ninguno, por lo tanto no se ha eliminado ninguna característica (feature) del mismo.
+En la imputación de valores de valores missing (NA) en este dataset se observa que no existe ninguno, por lo tanto no se ha eliminado ninguna característica (feature) del mismo.
 
-El siguiente paso consiste en la normalización de los datos.
-Esto es debido a que algunos factores pueden introducir variabilidad en algunos datos metabolómicos teniendo una gran influencia en el resultado final de los análisis estadísticos que se lleven a cabo.
+El siguiente paso consiste en la normalización de los datos.Esto es debido a que algunos factores pueden introducir variabilidad en algunos datos metabolómicos teniendo una gran influencia en el resultado final de los análisis estadísticos que se lleven a cabo.
 Ya que en el paso anterior no se ha detectado (ni imputado) ningún valor missing, puede llevarse a cabo la normalización de los datos sobre el dataset completo.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F, results = 'hide'}
 # Normalización de los datos
 normalized <- se[["AN004930"]] %>%
   PomaNorm(method = "log_pareto")
 
 normalized
 ```
-
 Se puede comprobar cuál ha sido el efecto de la normalización de los datos, llevando a cabo una comparación gráfico de los mismos antes y después de su normalización.
 
-```{r}
-# Checkeo de los datos antes y después de su normalización
-PomaBoxplots(se[["AN004930"]], x = "samples")
-PomaBoxplots(normalized, x = "samples")
+```{r echo = F}
+library(gridExtra)
+p1 <- PomaBoxplots(se[["AN004930"]], x = "samples")
+p2 <- PomaBoxplots(normalized, x = "samples")
+p3 <- PomaDensity(se[["AN004930"]], x = "features", theme_params = list(legend_position = "none"))
+p4 <- PomaDensity(normalized, x = "features", theme_params = list(legend_position = "none"))
 
-PomaDensity(se[["AN004930"]], x = "features", theme_params = list(legend_position = "none"))
-PomaDensity(normalized, x = "features", theme_params = list(legend_position = "none"))
+grid.arrange(p1, p2, p3, p4, nrow = 2, ncol = 2)
+
 ```
 
 El último paso del pre-procesado de los datos consiste en la detección de outliers.
-Los outliers son valores que destacan por su valor muy distinto al de la mayoría de los demás valores restantes.
-Estos outliers pueden tener gran influencia en los resultados de los análisis que se lleven a cabo posteriormente.
+Los outliers son valores que destacan por su valor muy distinto al de la mayoría de los demás valores restantes. Estos outliers pueden tener gran influencia en los resultados de los análisis que se lleven a cabo posteriormente.
 Conocer si existen valores outliers en los datos y decidir como tratarlos (incluirlos en los análisis, eliminarlos...) es un aspecto clave del pre-procesado de los datos.
 Respecto a la representación de los datos, se ha llevado a cabo la representación de los mismos en función de su 'Status' es decir si son muestras de individuos con sarcopenia o sin sarcopenia.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F}
 # Detección y eliminación (si se dan) de outliers
 outlier_results <- normalized %>% 
   PomaOutliers(method = "euclidean",
@@ -211,21 +194,14 @@ outlier_results$polygon_plot
 
 Se comprueba que no existe ningún valor que se haya considerado como outlier por el paquete POMA, y por tanto ningún dato ha sido eliminado.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F, results = 'hide'}
 # Guardar los datos una vez se ha finalizado el pre-procesado
 pre_processed <- outlier_results$data
 pre_processed
 ```
-
-Los resultados de pre-procesado de los datos con el POMA Workflow muestra que no se encuentran valores missing en este dataset, por tanto no es necesario realizar ninguna técnica de imputación o eliminación de los valores missing.
-Para la normalización de los datos, se empleó el método de log-pareto que permite reducir la variabilidad entre los metabolitos y mejorar la comparabilidad entre muestras.
-Los boxplots y los gráficos de densidad generados para los datos antes y después de la normalización, permite observar como tras la normalización la distribución de los valores presentan una menor dispersión, facilitando análisis posteriores.
-Para la detección de outliers en el dataset, se utilizó la distancia euclidina, y se utilizó la variable de Status, es decir, individuos con y sin sarcopenia como outcome para la detección de estos outliers.
-Sin embargo, no se identifica ningún valor considerado outlier mediante esta técnica, por lo que puede considerarse que los valores del dataset tienen una distribución bastante homogénea.
-
 Con el pre-procesamiento de los datos finalizado, se comenienza con el análisis exploratorio de los mismos, realizando análisis univariado, siguiendo el POMA Workflow.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F, results = 'hide'}
 # Es necesario establecer "Status" que diferencia entre ambos grupos 
 # como variable que se empleará para realizar el ttest
 pre_processed@colData <- pre_processed@colData[, c("Status", setdiff(colnames(pre_processed@colData), "Status"))]
@@ -239,7 +215,7 @@ Aunque la prueba t requiera el cumplimiento de varias condiciones para poder apl
 Una vez se ha realizado el anális univariado, se lleva a cabo el análisis multivariado.
 El Workflow POMA permite llevar a cabo análisis de componentes principales (PCA) de forma relativamente sencilla, por lo que se utilizan los datos (normalizados) para realizar el PCA.
 
-```{r}
+```{r echo = F}
 # Análisis de componentes principales
 pca <- normalized %>%
   PomaPCA(outcome = "Status")
@@ -255,7 +231,7 @@ De esta forma, se observa que parece que las muestras de individuos con sarcopen
 Otra opción del paquete POMA es calcular las correlaciones entre variables.
 Esto permite además, obtener las correlaciones ordenadas de las variables más correlacionadas a las menos correlacionadas.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F, results = 'hide'}
 # Cálculo de las correlaciones
 poma_cor <- PomaCorr(normalized)
 head(poma_cor$correlations)
@@ -266,7 +242,7 @@ El análisis de correlación entre las variables, calculándose por defecto los 
 Continuando con los análisis, se llevó a cabo PCA por otra vía en lugar de utilizando la herramienta de POMA Workflow.
 De esta manera, aunque ya se ha realizado el PCA mediante el paquete POMA, puede realizarse por otra vía, y permitirá también comparar resultados y ver si ambos enfoques son equivalentes.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F, results = 'hide'}
 # Extraer la matriz de datos del objeto SummarizedExperiment
 data <- assay(normalized)
 data <- as.matrix(data)
@@ -278,7 +254,7 @@ data <- t(data)
 El primer paso consiste en escalar los datos para poder trabajar con la matriz de covarianzas de los datos centrados.
 En los siguientes outputs solo se mostrará parta del output con las funciones head() o cat("parte del output"), puesto que resulta demasiado extenso para mostrarse completamente.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F, results = 'hide'}
 # Se escalan los datos
 data <- scale(data, center = TRUE, scale=FALSE)
 head(apply(data,2, mean))
@@ -287,7 +263,7 @@ head(apply(data,2, mean))
 
 A continuación, se calcula la matriz de varianzas ajustada dividiendo entre n, y posteriormente se calcula la matriz de correlaciones.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F, results = 'hide'}
 n<- dim(data)[1]
 S<-cov(data)*(n-1)/n
 cat("S output:", "\n", S[1:50], "\n")
@@ -301,11 +277,9 @@ Tras escalar los datos, la matriz de varianzas ajustada (S) y la matriz de corre
 Se comienza con el análisis PCA, empezando por el cálculo de las componentes principales.
 Los eigen\$vectors son las coordenadas de las componentes principales.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F, results = 'hide'}
 EIG <- eigen(S)
-
 cat("EIG values:", "\n", EIG$values[1:50], "\n")
-
 cat("EIG vectors:", "\n", EIG$vectors[1:50], "\n")
 ```
 
@@ -313,14 +287,16 @@ Para obtener la transformación de los datos asociada a las componentes principa
 
 Los valores propios (eigenvalues) y los vectores propios (eigenvectors) de la matriz de covarianzas se obtenien para posteriomente determinar los componentes principales.
 
-```{r}
+```{r echo = F, results = 'hide'}
 eigenVecs1 <- EIG$vectors
 PCAS1 <- data %*% eigenVecs1
 cat("PCAS1", "\n", PCAS1[1:50], "\n")
 
 vars1 <- EIG$values / sum(EIG$values)
 invisible(round(vars1, 3))
+```
 
+```{r echo = F}
 xlabel <- paste("PCA1 ", round(vars1[1]*100, 2),"%" )
 ylabel <- paste("PCA2 ", round(vars1[2]*100,2),"%" )
 plot(PCAS1[,1], PCAS1[,2], main = "Gut microbiota. 2 primeras PCs",
@@ -335,7 +311,7 @@ En este caso se realizará una agrupación jerárquica de las muestras del datas
 
 Se comprueba mediante un diagrama de cajas (nuevamente), que efectivamente los datos se encuentran normalizados.
 
-```{r}
+```{r echo = F, results = 'hide'}
 data <- assay(normalized)
 data <- as.matrix(data)
 
@@ -344,7 +320,7 @@ boxplot(data, las=2, cex.axis=0.7)
 
 Se seleccionan solo aquellos metabolitos que posean el 1% de las desviaciones estándar más altas, ya que es una práctica habitual de los estudios de clasificación puesto que se considera que son los individuos con más variabilidad los que son más relevantes para poder realizar las agrupaciones.
 
-```{r echo = T, results = 'hide'}
+```{r echo = F, results = 'hide'}
 percentage <- c(0.975)
 sds <- apply(data, MARGIN=1, FUN="sd")
 sel <- (sds>quantile(sds,percentage))
@@ -354,7 +330,7 @@ dim(data.sel)
 
 Como aproximación inicial se realiza una agrupación jerárquica de los datos, basada en distancia euclídeas y "average linkage".
 
-```{r}
+```{r echo = F}
 distmeth <- c("euclidian")
 Distan <- dist(t(data.sel), method=distmeth)
 treemeth <- c("average")
@@ -368,7 +344,8 @@ Esta agrupación pueden reflejar diferencias subyacentes en las características
 Por último, también es posible agrupar tanto las muestras del dataset como los metabolitos en función de los coeficientes de correlación.
 En este caso, se calculará la correlación de Pearson puesto que es la que se ha estado trabajando a lo largo de estos análisis, aunque también podría realizarse la agrupación jerárquica basada en la correlación de Spearman.
 
-```{r}
+```{r echo = F}
+par(mfrow = c(1,2))
 cor.pe <- cor(as.matrix(data.sel), method=c("pearson"))
 cor.pe.rows <- cor(t(as.matrix(data.sel)), method=c("pearson"))
 
@@ -409,6 +386,13 @@ Aunque puede apreciarse una cierta agrupación o clustering tanto de las muestra
 
 ### Conclusiones
 
+En conclusión, en este estudio se han empleado diversas técnicas de análisis bioinformático y estadístico para explorar la relación entre la microbiota y la sarcopenia.
+La clase SummarizedExperiment permite trabajar de forma relativamente sencilla con datos ómicos contieniendo toda la información relevante del dataset.
+Los resultados muestran que el dataset utilizado presenta bastante calidad desde el inicio (no contiene valores faltantes o outliers).
+La consistencia de los dos análisis PCA demuestra robustez en la metodología utilizada, y el cluster análisis ha demostrado patrones de agrupación entre los datos analizados.
+Estos resultados respaldan la relevancia de los metabolitos analizados en la sarcopenia y proporcionan una base para futuras investigaciones.
+Sin embargo, la complejidad de la enfermedad requiere un enfoque integrativo que combine datos metabolómicos con otras tipos de información biológica para obtener una visión más completa de sus mecanismos.
+
 ### Referencias
 
 [1. Mi repositorio de GitHub](https://github.com/aitanavazfer/Vazquez-Fernandez-Aitana-PEC1)
@@ -430,3 +414,143 @@ Aunque puede apreciarse una cierta agrupación o clustering tanto de las muestra
 [9. Introduction to microarray data exploration and analysis with basic R functions](https://aspteaching.github.io/Analisis_de_datos_omicos-Ejemplo_0-Microarrays/ExploreArrays.html#)
 
 [10. Casos y Ejemplos de Análisis Multivariante con R](https://aspteaching.github.io/AMVCasos/)
+
+### Anexo
+
+```{r}
+library(metabolomicsWorkbenchR)
+library(SummarizedExperiment)
+
+# Importar el dataset desde Metabolomics Workbench
+se = do_query(
+  context = 'study',
+  input_item = 'study_id',
+  input_value = 'ST003002',
+  output_item = 'SummarizedExperiment'
+)
+
+se
+
+# Comprobar el contenido de la matriz de expresión
+head(assay(se[["AN004930"]]))
+#Dimensiones de la matriz
+dim(assay(se[["AN004930"]]))
+# Comprobar los metadatos de las muestras
+colData(se[["AN004930"]])
+
+library(POMA)
+library(ggplot2)
+library(ggraph)
+library(plotly)
+
+# Imputar los valores missing con POMA
+imputed <- se[["AN004930"]] %>%
+  PomaImpute(method = "knn", zeros_as_na = TRUE, remove_na = TRUE, cutoff = 20)
+imputed
+
+# Normalización de los datos
+normalized <- se[["AN004930"]] %>%
+  PomaNorm(method = "log_pareto")
+
+normalized
+
+# Representación de los datos antes y después de la normalización
+PomaBoxplots(se[["AN004930"]], x = "samples")
+PomaBoxplots(normalized, x = "samples")
+PomaDensity(se[["AN004930"]], x = "features", theme_params = list(legend_position = "none"))
+PomaDensity(normalized, x = "features", theme_params = list(legend_position = "none"))
+
+# Detección y eliminación (si se dan) de outliers
+outlier_results <- normalized %>% 
+  PomaOutliers(method = "euclidean",
+               type = "median",
+               outcome = "Status",
+               coef = 2,
+               labels = FALSE)
+outlier_results$polygon_plot
+
+# Guardar los datos una vez se ha finalizado el pre-procesado
+pre_processed <- outlier_results$data
+pre_processed
+
+# Es necesario establecer "Status" que diferencia entre ambos grupos 
+# como variable que se empleará para realizar el ttest
+pre_processed@colData <- pre_processed@colData[, c("Status", setdiff(colnames(pre_processed@colData), "Status"))]
+
+head(PomaUnivariate(pre_processed, method = "ttest"))
+
+# Análisis de componentes principales
+pca <- normalized %>%
+  PomaPCA(outcome = "Status")
+
+pca$factors_plot
+
+# Cálculo de las correlaciones
+poma_cor <- PomaCorr(normalized)
+head(poma_cor$correlations)
+
+# Extraer la matriz de datos del objeto SummarizedExperiment
+data <- assay(normalized)
+data <- as.matrix(data)
+# Transponer la matriz si es necesario para tener muestras como filas
+data <- t(data)
+
+# Se escalan los datos
+data <- scale(data, center = TRUE, scale=FALSE)
+head(apply(data,2, mean))
+
+n<- dim(data)[1]
+S<-cov(data)*(n-1)/n
+cat("S output:", "\n", S[1:50], "\n")
+
+R<-cor(data)
+cat("R output:", "\n", R[1:50], "\n")
+
+EIG <- eigen(S)
+cat("EIG values:", "\n", EIG$values[1:50], "\n")
+cat("EIG vectors:", "\n", EIG$vectors[1:50], "\n")
+
+eigenVecs1 <- EIG$vectors
+PCAS1 <- data %*% eigenVecs1
+cat("PCAS1", "\n", PCAS1[1:50], "\n")
+
+vars1 <- EIG$values / sum(EIG$values)
+invisible(round(vars1, 3))
+
+#  Representación resultados PCA
+xlabel <- paste("PCA1 ", round(vars1[1]*100, 2),"%" )
+ylabel <- paste("PCA2 ", round(vars1[2]*100,2),"%" )
+plot(PCAS1[,1], PCAS1[,2], main = "Gut microbiota. 2 primeras PCs",
+     xlab=xlabel, ylab=ylabel)
+
+# Comprobación de datos normalizados
+data <- assay(normalized)
+data <- as.matrix(data)
+
+boxplot(data, las=2, cex.axis=0.7)
+
+percentage <- c(0.975)
+sds <- apply(data, MARGIN=1, FUN="sd")
+sel <- (sds>quantile(sds,percentage))
+data.sel <- data[sel, ]
+dim(data.sel)
+
+# Agrupación jerárquica con distancia euclidiana
+distmeth <- c("euclidian")
+Distan <- dist(t(data.sel), method=distmeth)
+treemeth <- c("average")
+hc <- hclust(Distan, method=treemeth)
+plot(hc)
+
+# Agrupación jerárquica con el método de Pearson
+cor.pe <- cor(as.matrix(data.sel), method=c("pearson"))
+cor.pe.rows <- cor(t(as.matrix(data.sel)), method=c("pearson"))
+
+dist.pe <- as.dist(1-cor.pe)
+dist.pe.rows <- as.dist(1-cor.pe.rows)
+
+hc.cor <- hclust(dist.pe, method=treemeth)
+plot(hc.cor)
+hc.cor.rows <- hclust(dist.pe.rows, method=treemeth)
+plot(hc.cor.rows)
+```
