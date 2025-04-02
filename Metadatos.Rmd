@@ -1,0 +1,37 @@
+---
+title: "metadatos"
+author: "Aitana Vázquez Fernández"
+date: "2025-04-02"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Importamos todo el dataset
+se = do_query(
+  context = 'study',
+  input_item = 'study_id',
+  input_value = 'ST003002',
+  output_item = 'SummarizedExperiment'
+)
+
+# Nos quedamos únicamente con el trabajado durante la PEC
+se <- se[["AN004930"]]
+
+#Extraemos los metadatos
+metadata <- metadata(se)
+```
+
+Este SummarizedExperiment contiene la siguiente información:
+
+Data source: Metabolomics Workbench Repository
+Study id: ST003002
+Analysis id: AN004930
+Analysis summary: Reversed phase NEGATIVE ION MODE
+Units: nmol/g
+Name: ST003002:AN004930
+Description: The role of gut microbiota in muscle mitochondria function, colon health, and sarcopenia: from clinical to bench (2)
+Subject type: NA
